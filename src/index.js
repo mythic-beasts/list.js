@@ -146,6 +146,14 @@ module.exports = function (id, options, values) {
     return self
   }
 
+  this.addElement = function(elm) {
+      var item = null;
+      notCreate = (self.items.length > self.page) ? true : false;
+      item = new Item(this.valueNames, elm, notCreate);
+      self.items.push(item);
+      self.update();
+  };
+
   /* Removes object from list.
    * Loops through the list and removes objects where
    * property "valuename" === value
