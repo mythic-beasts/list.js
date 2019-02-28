@@ -46,10 +46,21 @@ module.exports = function (list) {
   }
 
   const floatRegex = /^[+-]?([0-9]*[.])?[0-9]+(e[0-9]+)?$/;
+  var sortFunction;
 
   var sort = function () {
     list.trigger('sortStart')
     var options = {}
+
+    /* Re-run the existing sort, if there is one */
+    if (arguments.length == 0) {
+      if (sortFunction !== undefined) {
+        list.items.sort(sortFunction);
+        list.update();
+      }
+      list.trigger('sortComplete');
+      return;
+    } 
 
     var target = arguments[0].currentTarget || arguments[0].srcElement || undefined // arg[0] : val, arg[1] : { order: 'asc' }
 
@@ -70,8 +81,7 @@ module.exports = function (list) {
     // caseInsensitive
     // alphabet
     var customSortFunction = options.sortFunction || list.sortFunction || null,
-        multi = options.order === 'desc' ? -1 : 1,
-        sortFunction
+        multi = options.order === 'desc' ? -1 : 1;
 
     if (customSortFunction) {
       sortFunction = function (itemA, itemB) {
