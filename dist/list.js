@@ -222,6 +222,11 @@ module.exports = function (id, options, values) {
     self.filtered = false;
     self.parse(self.list);
   };
+  this.refresh = function () {
+    for (var i = 0; i < self.items.length; i++) {
+      self.items[i].reload();
+    }
+  };
   this.toJSON = function () {
     var json = [];
     for (var i = 0, il = self.items.length; i < il; i++) {
@@ -261,6 +266,13 @@ module.exports = function (id, options, values) {
     this.page = page;
     self.update();
     return self;
+  };
+  this.addElement = function (elm) {
+    var item = null;
+    notCreate = self.items.length > self.page ? true : false;
+    item = new Item(this.valueNames, elm, notCreate);
+    self.items.push(item);
+    self.update();
   };
 
   /* Removes object from list.
@@ -396,6 +408,10 @@ module.exports = function (list) {
         var values = list.templater.get(item, initValues);
         item.values(values);
       }
+    };
+    this.reload = function () {
+      var values = list.templater.get(item, initValues);
+      item.values(values);
     };
     this.values = function (newValues, notCreate) {
       if (newValues !== undefined) {
@@ -757,9 +773,20 @@ module.exports = function (list) {
     }
   };
   var floatRegex = /^[+-]?([0-9]*[.])?[0-9]+(e[0-9]+)?$/;
+  var sortFunction;
   var _sort = function sort() {
     list.trigger('sortStart');
     var options = {};
+
+    /* Re-run the existing sort, if there is one */
+    if (arguments.length == 0) {
+      if (sortFunction !== undefined) {
+        list.items.sort(sortFunction);
+        list.update();
+      }
+      list.trigger('sortComplete');
+      return;
+    }
     var target = arguments[0].currentTarget || arguments[0].srcElement || undefined; // arg[0] : val, arg[1] : { order: 'asc' }
 
     if (target) {
@@ -778,8 +805,7 @@ module.exports = function (list) {
     // caseInsensitive
     // alphabet
     var customSortFunction = options.sortFunction || list.sortFunction || null,
-      multi = options.order === 'desc' ? -1 : 1,
-      sortFunction;
+      multi = options.order === 'desc' ? -1 : 1;
     if (customSortFunction) {
       sortFunction = function sortFunction(itemA, itemB) {
         return customSortFunction(itemA, itemB, options) * multi;
